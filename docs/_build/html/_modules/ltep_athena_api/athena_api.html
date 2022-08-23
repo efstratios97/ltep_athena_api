@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ltep_athena_api.athena_api &mdash; LTEP Athena API 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> LTEP Athena API
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">ltep_athena_api</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LTEP Athena API</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>ltep_athena_api.athena_api</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ltep_athena_api.athena_api</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
+
+<span class="kn">from</span> <span class="nn">ltep_athena_api.authenticate</span> <span class="kn">import</span> <span class="n">AthenaAuth</span>
+<span class="kn">from</span> <span class="nn">ltep_athena_api.models.AnalysisBlock</span> <span class="kn">import</span> <span class="n">AnalysisBlock</span>
+<span class="kn">from</span> <span class="nn">ltep_athena_api.models.CustomOperation</span> <span class="kn">import</span> <span class="n">CustomOperation</span>
+<span class="kn">from</span> <span class="nn">ltep_athena_api.models.InputForm</span> <span class="kn">import</span> <span class="n">InputField</span><span class="p">,</span> <span class="n">InputFieldGroup</span><span class="p">,</span> <span class="n">InputFieldGroupSelectionOption</span><span class="p">,</span> <span class="n">InputFieldType</span>
+
+
+<div class="viewcode-block" id="AthenaAPI"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.athena_api.AthenaAPI">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">AthenaAPI</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_registy</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_params_registry</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__get_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">auth</span><span class="p">:</span> <span class="n">AthenaAuth</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">host_api_address</span> <span class="o">+</span> <span class="s1">&#39;/user/email?email=&#39;</span> <span class="o">+</span>
+                                <span class="n">auth</span><span class="o">.</span><span class="n">email</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="nd">@AthenaAuth</span><span class="o">.</span><span class="n">authenticate_access_athena</span>
+    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">auth</span><span class="p">:</span> <span class="n">AthenaAuth</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This method retrieves dataset data from specified Athena Platform and dataset. </span>
+<span class="sd">        :param str dataset_id: id of dataset of interest</span>
+<span class="sd">        :param str dataset_label: label of dataset of interest</span>
+<span class="sd">        :param AthenaAuth auth: AthenaAuth object</span>
+<span class="sd">        :raises Exception: if dataset retrieval was unsuccessful</span>
+<span class="sd">        :returns: dataframe of requested data</span>
+<span class="sd">        :rtype: DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_user</span><span class="p">(</span><span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">host_api_address</span> <span class="o">+</span> <span class="s1">&#39;/dataset/data?user_id=&#39;</span> <span class="o">+</span>
+                                    <span class="n">user</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&amp;dataset_id=&#39;</span> <span class="o">+</span> <span class="n">dataset_id</span> <span class="o">+</span> <span class="s1">&#39;&amp;dataset_label=&#39;</span> <span class="o">+</span> <span class="n">dataset_label</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;AthenaApi: Exception raised @ get_data(*args). Data could not retrieved. Check existence of dataset/user, user&#39;s credentials or user&#39;s access rigths to dataset </span><span class="si">{dataset_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset_id</span><span class="o">=</span><span class="n">dataset_id</span><span class="p">))</span>
+
+    <span class="nd">@AthenaAuth</span><span class="o">.</span><span class="n">authenticate_access_athena</span>
+    <span class="k">def</span> <span class="nf">create_analysis_block</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">analysis_block</span><span class="p">:</span> <span class="n">AnalysisBlock</span><span class="p">,</span> <span class="n">custom_operation</span><span class="p">:</span> <span class="n">CustomOperation</span><span class="p">,</span> <span class="n">inputfields</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InputField</span><span class="p">],</span> <span class="n">auth</span><span class="p">:</span> <span class="n">AthenaAuth</span><span class="p">,</span>
+            <span class="n">inputfield_group</span><span class="p">:</span> <span class="n">InputFieldGroup</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">inputfield_selection_options</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InputFieldGroupSelectionOption</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">input_field_selection_option_dict</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This method creates a complete analysis block and sends it to LTEP Athena Platform. </span>
+<span class="sd">        :param AnalysisBlock analysis_block: AnalysisBlock</span>
+<span class="sd">        :param CustomOperation custom_operation: CustomOperation</span>
+<span class="sd">        :param List[InputField] inputfields: List[InputField]</span>
+<span class="sd">        :param List[InputField] inputfields: List[InputField]</span>
+<span class="sd">        :param InputFieldGroup inputfield_group: InputFieldGroup</span>
+<span class="sd">        :param List[InputFieldGroupSelectionOption] inputfield_selection_options: List[InputFieldGroupSelectionOption]</span>
+<span class="sd">        :param dict input_field_selection_option_dict: dict</span>
+<span class="sd">        :param AthenaAuth auth: AthenaAuth object</span>
+<span class="sd">        :returns: nothing</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">analysis_block_complete_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;analysis_block&#39;</span><span class="p">:</span> <span class="n">analysis_block</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">})</span>
+        <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;custom_operation&#39;</span><span class="p">:</span> <span class="n">custom_operation</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">})</span>
+        <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;input_fields&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">inputfield</span><span class="o">.</span><span class="vm">__dict__</span> <span class="k">for</span> <span class="n">inputfield</span> <span class="ow">in</span> <span class="n">inputfields</span><span class="p">]})</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inputfield_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;input_field_group&#39;</span><span class="p">:</span> <span class="n">inputfield_group</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">})</span>
+            <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+                <span class="s1">&#39;input_field_group_option_selections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">inputfield_selection_options</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">]})</span>
+            <span class="n">analysis_block_complete_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;input_field_selection_option_dict&#39;</span><span class="p">:</span> <span class="n">input_field_selection_option_dict</span><span class="p">})</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">host_api_address_sandbox</span> <span class="o">+</span>
+                                     <span class="s1">&#39;/api/sandbox/analysis&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">analysis_block_complete_dict</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;AthenaApi: Exception catched @ create_analysis_block(*args). Analysis Block could not be created. Probably alredy exists.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AthenaAPI.register_function"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.athena_api.AthenaAPI.register_function">[docs]</a>    <span class="k">def</span> <span class="nf">register_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">FunctionType</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+                          <span class="n">packages_to_install</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                          <span class="n">custom_module_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">path_to_module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span>
+                          <span class="n">custom_modules_and_module_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This method registers and saves custom methods and its parameters in two distinct dictionaries. furthermore, it installs user&#39;s required packages and custom written modules.</span>
+<span class="sd">        :param FunctionType function: FunctionType, the method signature as function !not! string</span>
+<span class="sd">        :param dict[str,str] params: dict[str,str], the key is the passed function&#39;s parameter definition in the signature and the value the parameter passed by the user itself, e.g. {&#39;param_by_function_defined&#39; : &#39;my_param&#39;}</span>
+<span class="sd">        :param List[str] packages_to_install: List[str], in case of extra needed packages pass package name and optionally version like pandas==1.0.1</span>
+<span class="sd">        :param str custom_module_name: str, the custom written module&#39;s name </span>
+<span class="sd">        :param str path_to_module: str, the custom written module&#39;s path, use os.path.abspath(__file__) to dynamically assign path</span>
+<span class="sd">        :param dict custom_modules_and_module_paths: dict, in case of multiple custom written modules, map custom module name (key) to custom module path (value) via a dictionary path; use os.path.abspath(__file__) to dynamically assign path</span>
+<span class="sd">        :returns: nothing</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">packages_to_install</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">package_name</span> <span class="ow">in</span> <span class="n">packages_to_install</span><span class="p">:</span>
+                <span class="n">AthenaAPI</span><span class="o">.</span><span class="n">__install_module</span><span class="p">(</span><span class="n">package_name</span><span class="o">=</span><span class="n">package_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">custom_modules_and_module_paths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">custom_module_name</span><span class="p">,</span> <span class="n">custom_module_path</span><span class="p">)</span> <span class="ow">in</span> <span class="n">custom_modules_and_module_paths</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">custom_module_path</span><span class="p">))</span>
+                <span class="nb">globals</span><span class="p">()[</span><span class="n">custom_module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
+                    <span class="n">custom_module_name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">custom_module_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_to_module</span><span class="p">))</span>
+            <span class="nb">globals</span><span class="p">()[</span><span class="n">custom_module_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span>
+                <span class="n">custom_module_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_registy</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">function</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">function</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_params_registry</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">function</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">params</span><span class="p">})</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">__install_module</span><span class="p">(</span><span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">subprocess</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;pip&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="n">package_name</span><span class="p">])</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Efstratios Pahis (LTEP Technologies).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

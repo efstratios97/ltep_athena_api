@@ -1,0 +1,7 @@
+deploy_execution.py
+__pycache__
+*.pyc
+test.py
+build 
+dist
+*EGG*

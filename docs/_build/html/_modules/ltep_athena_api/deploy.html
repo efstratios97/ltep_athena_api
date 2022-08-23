@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ltep_athena_api.deploy &mdash; LTEP Athena API 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> LTEP Athena API
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">ltep_athena_api</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LTEP Athena API</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>ltep_athena_api.deploy</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ltep_athena_api.deploy</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">jenkins</span>
+
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span> <span class="nn">github</span> <span class="kn">import</span> <span class="n">Github</span><span class="p">,</span> <span class="n">enable_console_debug_logging</span>
+<span class="kn">from</span> <span class="nn">github.Repository</span> <span class="kn">import</span> <span class="n">Repository</span>
+
+<span class="kn">from</span> <span class="nn">random_word</span> <span class="kn">import</span> <span class="n">RandomWords</span>
+
+<span class="kn">from</span> <span class="nn">ltep_athena_api.authenticate</span> <span class="kn">import</span> <span class="n">AthenaAuth</span>
+
+
+<div class="viewcode-block" id="DeployGithubAthena"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DeployGithubAthena</span><span class="p">:</span>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_github_instance"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_github_instance">[docs]</a>    <span class="k">def</span> <span class="nf">create_github_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">acess_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Github</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github instance for repositories hosted on GitHub Inc. </span>
+<span class="sd">        :param str acess_token: developer token derived from Github</span>
+<span class="sd">        :raises Exception: if GitHub authenfication was unsuccessful</span>
+<span class="sd">        :returns: GitHub instance</span>
+<span class="sd">        :rtype: Github</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Github</span><span class="p">(</span><span class="n">acess_token</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Github Instance could not be created. Check credentials&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_github_instance_password"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_github_instance_password">[docs]</a>    <span class="k">def</span> <span class="nf">create_github_instance_password</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Github</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github instance for repositories hosted on GitHub Inc. </span>
+<span class="sd">        :param str acess_token: developer token derived from Github</span>
+<span class="sd">        :raises Exception: if GitHub authenfication was unsuccessful</span>
+<span class="sd">        :returns: GitHub instance</span>
+<span class="sd">        :rtype: Github</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Github</span><span class="p">(</span><span class="n">login_or_token</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Github Instance could not be created. Check credentials&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_github_enterprise_instance"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_github_enterprise_instance">[docs]</a>    <span class="k">def</span> <span class="nf">create_github_enterprise_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">login_or_access_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github instance for repositories hosted on by GitHub enterprise at own server location</span>
+<span class="sd">        :param str base_url: url location to Github Enterprise </span>
+<span class="sd">        :param str acess_token: developer token derived from Github</span>
+<span class="sd">        :raises Exception: if GitHub authenfication was unsuccessful</span>
+<span class="sd">        :returns: GitHub instance</span>
+<span class="sd">        :rtype: Github</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Github</span><span class="p">(</span>
+                <span class="s2">&quot;https://</span><span class="si">{hostname}</span><span class="s2">/api/v3&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_url</span><span class="p">),</span> <span class="n">login_or_access_token</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Github Instance could not be created. Check credentials&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.get_existing_repo"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.get_existing_repo">[docs]</a>    <span class="k">def</span> <span class="nf">get_existing_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">github</span><span class="p">:</span> <span class="n">Github</span><span class="p">,</span> <span class="n">repo_full_name_or_repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Repository</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This methods returns a Github Repository for a user</span>
+<span class="sd">        :param str repo_full_name_or_repo_id: repo&#39;s name, e.g. your_github_user/your_repository</span>
+<span class="sd">        :returns: GitHub instance</span>
+<span class="sd">        :rtype: Github</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">enable_console_debug_logging</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">github</span><span class="o">.</span><span class="n">get_repo</span><span class="p">(</span><span class="n">full_name_or_id</span><span class="o">=</span><span class="n">repo_full_name_or_repo_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_new_github_repo_user"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_new_github_repo_user">[docs]</a>    <span class="k">def</span> <span class="nf">create_new_github_repo_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">github</span><span class="p">:</span> <span class="n">Github</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;athena_&#39;</span> <span class="o">+</span> <span class="n">RandomWords</span><span class="p">()</span><span class="o">.</span><span class="n">get_random_word</span><span class="p">(),</span> <span class="n">private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Repository</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github Repository for a user</span>
+<span class="sd">        :param Github github: Github instance to perform git operations</span>
+<span class="sd">        :param str repo_name: repo&#39;s name</span>
+<span class="sd">        :param bool private: private or public repo</span>
+<span class="sd">        :returns: Repository instance</span>
+<span class="sd">        :rtype: Repository</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">github</span><span class="o">.</span><span class="n">get_user</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">create_repo</span><span class="p">(</span><span class="n">repo_name</span><span class="p">,</span> <span class="n">private</span><span class="o">=</span><span class="n">private</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_new_github_repo_organization"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_new_github_repo_organization">[docs]</a>    <span class="k">def</span> <span class="nf">create_new_github_repo_organization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">github</span><span class="p">:</span> <span class="n">Github</span><span class="p">,</span> <span class="n">organization_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">RandomWords</span><span class="p">()</span><span class="o">.</span><span class="n">get_random_word</span><span class="p">(),</span> <span class="n">private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Repository</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github Repository for a organization</span>
+<span class="sd">        :param Github github: Github instance to perform git operations</span>
+<span class="sd">        :param str repo_name: repo&#39;s name</span>
+<span class="sd">        :param bool private: private or public repo</span>
+<span class="sd">        :returns: Repository instance</span>
+<span class="sd">        :rtype: Repository</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">organization</span> <span class="o">=</span> <span class="n">github</span><span class="o">.</span><span class="n">get_organization</span><span class="p">(</span><span class="n">organization_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">organization</span><span class="o">.</span><span class="n">create_repo</span><span class="p">(</span>
+            <span class="n">repo_name</span><span class="p">,</span>
+            <span class="n">allow_rebase_merge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">auto_init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">private</span><span class="o">=</span><span class="n">private</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.deploy_to_github"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.deploy_to_github">[docs]</a>    <span class="k">def</span> <span class="nf">deploy_to_github</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">:</span> <span class="n">Repository</span><span class="p">,</span> <span class="n">folder_location</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This methods creates a Github Repository for a organization</span>
+<span class="sd">        :param Github github: Github instance to perform git operations</span>
+<span class="sd">        :param str repo_name: repo&#39;s name</span>
+<span class="sd">        :param bool private: private or public repo</span>
+<span class="sd">        :returns: Repository instance</span>
+<span class="sd">        :rtype: Repository</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">listOfFiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span><span class="p">)</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">folder_location</span><span class="p">):</span>
+            <span class="n">listOfFiles</span> <span class="o">+=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">]</span>
+        <span class="n">all_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">contents</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_contents</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">contents</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="n">contents</span><span class="p">:</span>
+            <span class="n">file_content</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_content</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;dir&quot;</span><span class="p">:</span>
+                <span class="n">contents</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">get_contents</span><span class="p">(</span><span class="n">file_content</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">file</span> <span class="o">=</span> <span class="n">file_content</span>
+                <span class="n">all_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="s1">&#39;ContentFile(path=&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;)&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">files_to_commit</span> <span class="o">=</span> <span class="p">[</span><span class="n">trimmed_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trimmed_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">trimmed_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">trimmed_file</span> <span class="ow">in</span> <span class="p">[</span><span class="n">file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                <span class="n">folder_location</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">listOfFiles</span> <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;__pycache__&#39;</span> <span class="ow">in</span> <span class="n">file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s1">&#39;deploy_execution&#39;</span> <span class="ow">in</span> <span class="n">file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s1">&#39;cpython&#39;</span> <span class="ow">in</span> <span class="n">file</span> <span class="ow">and</span> <span class="ow">not</span> <span class="s1">&#39;.git&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">]]</span>
+            <span class="n">files_to_commit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;.gitignore&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">file_to_commit</span> <span class="ow">in</span> <span class="n">files_to_commit</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">folder_location</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">file_to_commit</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">file_to_commit</span> <span class="ow">in</span> <span class="n">all_files</span><span class="p">:</span>
+                    <span class="n">contents</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_contents</span><span class="p">(</span><span class="n">file_to_commit</span><span class="p">)</span>
+                    <span class="n">repo</span><span class="o">.</span><span class="n">update_file</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;committing files&quot;</span><span class="p">,</span>
+                                     <span class="n">content</span><span class="p">,</span> <span class="n">contents</span><span class="o">.</span><span class="n">sha</span><span class="p">,</span> <span class="n">branch</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">file_to_commit</span> <span class="o">+</span> <span class="s1">&#39; UPDATED&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">repo</span><span class="o">.</span><span class="n">create_file</span><span class="p">(</span><span class="n">file_to_commit</span><span class="p">,</span> <span class="s2">&quot;committing files&quot;</span><span class="p">,</span>
+                                     <span class="n">content</span><span class="p">,</span> <span class="n">branch</span><span class="o">=</span><span class="s2">&quot;master&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">file_to_commit</span> <span class="o">+</span> <span class="s1">&#39; CREATED&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;failed_failed: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_to_commit</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DeployGithubAthena.create_webhook"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.DeployGithubAthena.create_webhook">[docs]</a>    <span class="k">def</span> <span class="nf">create_webhook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">:</span> <span class="n">Repository</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;github-webhook&#39;</span><span class="p">,</span> <span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;push&quot;</span><span class="p">,</span> <span class="s2">&quot;pull_request&quot;</span><span class="p">],</span> <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a webhook for the specified repository.&quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{endpoint}</span><span class="s2">/&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="n">endpoint</span><span class="p">),</span>
+            <span class="s2">&quot;content_type&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span>
+        <span class="p">}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">create_hook</span><span class="p">(</span><span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">active</span><span class="o">=</span><span class="n">active</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;GitHub Webhook could have not been created. For more details see error message above.&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@AthenaAuth</span><span class="o">.</span><span class="n">authenticate_access_athena</span>
+    <span class="k">def</span> <span class="nf">init_default_deployment_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">github_developer_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_full_name_or_repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">webhook_host</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">folder_location_of_custom_package</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">auth</span><span class="p">:</span> <span class="n">AthenaAuth</span><span class="p">,</span> <span class="n">create_new_repo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">new_repo_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a webhook for the specified repository.</span>
+<span class="sd">        :param AthenaAuth auth: AthenaAuth object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">github</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_github_instance</span><span class="p">(</span>
+            <span class="n">DeployGithubAthena</span><span class="p">,</span> <span class="n">acess_token</span><span class="o">=</span><span class="n">github_developer_token</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">create_new_repo</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_repo_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_new_github_repo_user</span><span class="p">(</span>
+                    <span class="n">DeployGithubAthena</span><span class="p">,</span> <span class="n">github</span><span class="o">=</span><span class="n">github</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_new_github_repo_user</span><span class="p">(</span>
+                    <span class="n">DeployGithubAthena</span><span class="p">,</span> <span class="n">github</span><span class="o">=</span><span class="n">github</span><span class="p">,</span> <span class="n">repo_name</span><span class="o">=</span><span class="n">new_repo_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_existing_repo</span><span class="p">(</span>
+                <span class="n">DeployGithubAthena</span><span class="p">,</span> <span class="n">github</span><span class="o">=</span><span class="n">github</span><span class="p">,</span> <span class="n">repo_full_name_or_repo_id</span><span class="o">=</span><span class="n">repo_full_name_or_repo_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_webhook</span><span class="p">(</span>
+            <span class="n">DeployGithubAthena</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="n">webhook_host</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="jenkinsDeploy"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.jenkinsDeploy">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">jenkinsDeploy</span><span class="p">:</span>
+
+<div class="viewcode-block" id="jenkinsDeploy.connect_to_jenkins"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.jenkinsDeploy.connect_to_jenkins">[docs]</a>    <span class="k">def</span> <span class="nf">connect_to_jenkins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">jenkins</span><span class="o">.</span><span class="n">Jenkins</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jenkins</span><span class="o">.</span><span class="n">Jenkins</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">host_url</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="n">user_name</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="jenkinsDeploy.create_jenkins_job"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.jenkinsDeploy.create_jenkins_job">[docs]</a>    <span class="k">def</span> <span class="nf">create_jenkins_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jenkins_server</span><span class="p">:</span> <span class="n">jenkins</span><span class="o">.</span><span class="n">Jenkins</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;athena_deploy&#39;</span><span class="p">,</span> <span class="n">config_xml</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">jenkins</span><span class="o">.</span><span class="n">EMPTY_CONFIG_XML</span><span class="p">):</span>
+        <span class="n">jenkins_server</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">config_xml</span><span class="o">=</span><span class="n">config_xml</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="jenkinsDeploy.build_jenkins_job"><a class="viewcode-back" href="../../ltep_athena_api.html#ltep_athena_api.deploy.jenkinsDeploy.build_jenkins_job">[docs]</a>    <span class="k">def</span> <span class="nf">build_jenkins_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jenkins_server</span><span class="p">:</span> <span class="n">jenkins</span><span class="o">.</span><span class="n">Jenkins</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;athena_deploy&#39;</span><span class="p">):</span>
+        <span class="n">jenkins_server</span><span class="o">.</span><span class="n">build_job</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Efstratios Pahis (LTEP Technologies).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
