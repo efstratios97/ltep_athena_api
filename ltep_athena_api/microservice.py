@@ -24,8 +24,8 @@ class AthenaRestAPI:
         """This method initializes the FLASK application.
             :params str host: server url for hosting service
             :params int port: port where application shall run
-            :returns: Flask Application object
-            :rtype: Flask
+            :returns: None
+            :rtype: None
         """
         SandBoxServiceFlask = Flask(__name__)
         CORS(SandBoxServiceFlask)
@@ -45,6 +45,7 @@ blueprint = fl.Blueprint('AthenaRestAPI', __name__)
 @cross_origin(origins="*")
 def execute_individual_function(func_name: str):
     try:
+
         formdata = fl.request.get_json(force=True)
         athena_api = get_global_athena_api_instance()
         data = athena_api.function_registy.get(func_name, None)(
