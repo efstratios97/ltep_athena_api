@@ -16,12 +16,12 @@
     <img src="https://www.ltep-technologies.com/wp-content/uploads/2022/06/LTEP_LOGO_21-3.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">LTEP ATHENA API</h3>
+  <h3 align="center">LTEP Athena API</h3>
 
   <p align="center">
-    The official API
+    The official API: Welcome to the World's most flexible and extensible Data Science Platform
     <br />
-    <a href="https://github.com/efstratios97/ltep_athena_api/tree/main/docs"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/efstratios97/ltep_athena_api/tree/main/docs"><strong>Explore the docs</strong></a>
     <br />
     <br />
     <a href="https://github.com/efstratios97/ltep_athena_api">View Demo</a>
@@ -67,7 +67,8 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://www.ltep-technologies.com/wp-content/uploads/2022/06/ATHINA_LOGO-3.png)
 
-This is the official LTEP Athena API to connect to your platform to create custom Analysis with Python and deploy back to your Platform
+This is the official LTEP Athena API to connect to your LTEP Athena platform.
+Create Custom Analysis, Real-time Streams, and Embedd any Technologie from Apache Flink to your own Package/Library. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -91,7 +92,7 @@ Production Version follows soon...
 
 ### Prerequisites
 
-Python >=3.8
+Python >=3.6
 
 
 ### Installation

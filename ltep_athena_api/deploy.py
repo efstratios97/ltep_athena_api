@@ -1,16 +1,12 @@
 import os
-
-import jenkins
-
 from dataclasses import dataclass
 from typing import List
 
+import jenkins
 from github import Github, enable_console_debug_logging
 from github.Repository import Repository
-
-from random_word import RandomWords
-
 from ltep_athena_api.authenticate import AthenaAuth
+from random_word import RandomWords
 
 
 @dataclass
