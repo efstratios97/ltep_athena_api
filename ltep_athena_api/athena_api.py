@@ -1,21 +1,25 @@
+import importlib
+import json
 import os
 import sys
-import json
-from typing import List, Optional
-import requests
-import importlib
-import pandas as pd
-
 from dataclasses import dataclass
-
 from types import FunctionType
+from typing import Any, List, Optional, Union
+from uuid import uuid4
 
-from ltep_athena_api.models.DataSet import DataSet
+import pandas as pd
+import requests
+import websocket
 from ltep_athena_api.authenticate import AthenaAuth
+from ltep_athena_api.constants import (DATASTREAM_NAME_SPACE_LTEP_ATHENA_SERVICE,
+                                       EVENT_LISTENER_FUSIONCHART_LABEL_VALUE,
+                                       EVENT_NAME_KEY, EVENT_DATA_KEY)
 from ltep_athena_api.models.AnalysisBlock import AnalysisBlock
 from ltep_athena_api.models.CustomOperation import CustomOperation
+from ltep_athena_api.models.DataSet import DataSet
+from ltep_athena_api.models.InputForm import (InputField, InputFieldGroup,
+                                              InputFieldGroupSelectionOption)
 from ltep_athena_api.models.WorkflowOperation import WorkflowOperation
-from ltep_athena_api.models.InputForm import InputField, InputFieldGroup, InputFieldGroupSelectionOption, InputFieldType
 
 
 @dataclass
@@ -24,6 +28,8 @@ class AthenaAPI:
     def __post_init__(self):
         self.function_registy = {}
         self.function_params_registry = {}
+        self.function_streaming_registry = {}
+        self.function_streaming_params_registry = {}
 
     def __get_user(self, auth: AthenaAuth) -> dict:
         try:
@@ -154,10 +160,70 @@ class AthenaAPI:
                 "AthenaApi: Exception catched @ create_workflow_operation(*args). Custom Workflow Operation could not be created. Probably alredy exists.")
             return False
 
+    def stream_data(self, event_name: str, data: dict, auth: AthenaAuth) -> None:
+        """This method creates a Websocket to LTEP Athena Streaming Service and streams the passed data. Currently, the data must be json-serializable.
+        :param str event_name: name of the event (if you stream fusionChart data, the Chart id must be identical if you don't use built-in preprocessing method)
+        :param dict data: data to be stream (must be json-serializable)
+        :param AthenaAuth auth: AthenaAuth object
+        :raises Exception: if json-serialization fails
+        """
+        try:
+            data.update({EVENT_NAME_KEY: event_name})
+            data = json.dumps(data).encode('utf-8')
+        except Exception as e:
+            print(e)
+            raise e
+        try:
+            ws = websocket.WebSocket()
+            ws.connect(
+                "".join([auth.host_api_address_streaming, DATASTREAM_NAME_SPACE_LTEP_ATHENA_SERVICE]))
+            ws.send_binary(payload=data)
+        except Exception as e:
+            print(e)
+
+    def stream_fusioncharts_data_unformatted(self, event_name: str, label: Union[str, int, Any], value: Union[int, float, str], auth: AthenaAuth) -> None:
+        """This method creates a Websocket to LTEP Athena Streaming Service and streams the passed data. Currently, the data must be json-serializable.
+        :param str event_name: name of the event (if you stream fusionChart data, the Chart id must be identical if you don't use built-in preprocessing method)
+        :param Union[str, int, Any] label: the X-value of Chart (label)
+        :param Union[int, float, str] value: the Y-value of Chart (value)
+        :param AthenaAuth auth: AthenaAuth object
+        """
+        stream_data = {EVENT_DATA_KEY: {
+            "label": label, "value": value, "uuid": uuid4().hex}}
+        try:
+            self.stream_data(event_name=event_name,
+                             data=stream_data, auth=auth)
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def preprocessing_fusionchart_real_time(complete_fusionchart_data: dict, event_name: str, auth: AthenaAuth) -> dict:
+        """This methods adds EventTriggers to user-defined FusionChart dict/json. 
+        User can do it accordingly the FusionChart documentation himself 
+        but it is highly recommended to use this built-in function.
+        :param dict complete_fusionchart_data: complete fusion chart dict/json to be send to Fronentend
+        :param str event_name: name of the event; (Chart id will be replaced with event_name, so event_name should be a unique value)
+        """
+
+        if not complete_fusionchart_data.get("result", None) is None:
+            data = complete_fusionchart_data.get("result")
+        else:
+            data = complete_fusionchart_data
+        if data.get("dataSource", None) is None:
+            raise ValueError(
+                "No dataSource Object defined in the right place in fusionchart_data. Please refer to the oficial Dokumentaion of Fusioncharts")
+        data.update({"id": event_name})
+        data.update({"events": {
+            "initialized":
+            EVENT_LISTENER_FUSIONCHART_LABEL_VALUE.format(
+                chart_id=data.get("id", event_name), streaming_host=auth.host_api_address_streaming)
+        }})
+        return data
+
     def register_function(self, function: FunctionType, params: Optional[dict[str, str]] = {},
                           packages_to_install: Optional[List[str]] = None,
                           custom_module_name: Optional[str] = None, path_to_module: Optional[str] = os.path.abspath(__file__),
-                          custom_modules_and_module_paths: Optional[dict[str, str]] = None) -> None:
+                          custom_modules_and_module_paths: Optional[dict[str, str]] = None, create_custom_operation: bool = True) -> Union[None, CustomOperation]:
         """This method registers and saves custom methods and its parameters in two distinct dictionaries. furthermore, it installs user's required packages and custom written modules.
         :param FunctionType function: FunctionType, the method signature as function !not! string
         :param Optional[dict[str,str]] params: dict[str,str], the key is the passed function's parameter definition in the signature and the value the parameter passed by the user itself, e.g. {'param_by_function_defined' : 'my_param'}
@@ -165,8 +231,9 @@ class AthenaAPI:
         :param Optional[str] custom_module_name: str, the custom written module's name 
         :param Optional[str] path_to_module: str, the custom written module's path, use os.path.abspath(__file__) to dynamically assign path
         :param Optional[dict] custom_modules_and_module_paths: dict, in case of multiple custom written modules, map custom module name (key) to custom module path (value) via a dictionary path; use os.path.abspath(__file__) to dynamically assign path
-        :returns: nothing
-        :rtype: None
+        :param Optional[bool] create_custom_operation: default is True, if True will create automatically CustomOperation 
+        :returns: nothing or CustomOperation, if create_custom_operation set to True
+        :rtype: Union[None, CustomOperation]
         """
         if not packages_to_install is None:
             for package_name in packages_to_install:
@@ -182,9 +249,49 @@ class AthenaAPI:
                 custom_module_name)
         self.function_registy.update({function.__name__: function})
         self.function_params_registry.update({function.__name__: params})
+        if create_custom_operation:
+            return AthenaAPI.__create_custom_operation_from_registry(custom_operation_func_signature=function.__name__)
+
+    def register_streaming_function(self, function: FunctionType, params: Optional[dict[str, str]] = {},
+                                    packages_to_install: Optional[List[str]] = None,
+                                    custom_module_name: Optional[str] = None, path_to_module: Optional[str] = os.path.abspath(__file__),
+                                    custom_modules_and_module_paths: Optional[dict[str, str]] = None, create_custom_operation: bool = True) -> Union[None, CustomOperation]:
+        """This method registers and saves custom streaming methods and its parameters in two distinct dictionaries. furthermore, it installs user's required packages and custom written modules.
+        :param FunctionType function: FunctionType, the method signature as function !not! string
+        :param str event_name: unique event_name to identify the correct websocket
+        :param Optional[dict[str,str]] params: dict[str,str], the key is the passed function's parameter definition in the signature and the value the parameter passed by the user itself, e.g. {'param_by_function_defined' : 'my_param'}
+        :param Optional[List[str]] packages_to_install: List[str], in case of extra needed packages pass package name and optionally version like pandas==1.0.1
+        :param Optional[str] custom_module_name: str, the custom written module's name 
+        :param Optional[str] path_to_module: str, the custom written module's path, use os.path.abspath(__file__) to dynamically assign path
+        :param Optional[dict] custom_modules_and_module_paths: dict, in case of multiple custom written modules, map custom module name (key) to custom module path (value) via a dictionary path; use os.path.abspath(__file__) to dynamically assign path
+        :param Optional[bool] create_custom_operation: default is True, if True will create automatically CustomOperation 
+        :returns: nothing or CustomOperation, if create_custom_operation set to True
+        :rtype: Union[None, CustomOperation]
+        """
+        if not packages_to_install is None:
+            for package_name in packages_to_install:
+                AthenaAPI.__install_module(package_name=package_name)
+        if not custom_modules_and_module_paths is None:
+            for (custom_module_name, custom_module_path) in custom_modules_and_module_paths.items():
+                sys.path.insert(0, r'{}'.format(custom_module_path))
+                globals()[custom_module_name] = importlib.import_module(
+                    custom_module_name)
+        elif not custom_module_name is None:
+            sys.path.insert(0, r'{}'.format(path_to_module))
+            globals()[custom_module_name] = importlib.import_module(
+                custom_module_name)
+        self.function_streaming_registry.update({function.__name__: function})
+        self.function_streaming_params_registry.update(
+            {function.__name__: params})
+        if create_custom_operation:
+            return AthenaAPI.__create_custom_operation_from_registry(custom_operation_func_signature=function.__name__)
 
     @staticmethod
     def __install_module(package_name: str) -> None:
         import subprocess
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", package_name])
+
+    @staticmethod
+    def __create_custom_operation_from_registry(custom_operation_func_signature: str) -> CustomOperation:
+        return CustomOperation(custom_operation_func_signature=custom_operation_func_signature)
