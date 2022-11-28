@@ -13,6 +13,8 @@ import websocket
 from ltep_athena_api.authenticate import AthenaAuth
 from ltep_athena_api.constants import (DATASTREAM_NAME_SPACE_LTEP_ATHENA_SERVICE,
                                        EVENT_LISTENER_FUSIONCHART_LABEL_VALUE,
+                                       EVENT_LISTENER_FUSIONCHART_RENDER_COMPLETE,
+                                       EVENT_LISTENER_FUSIONCHART_BEFORE_RENDER,
                                        EVENT_NAME_KEY, EVENT_DATA_KEY)
 from ltep_athena_api.models.AnalysisBlock import AnalysisBlock
 from ltep_athena_api.models.CustomOperation import CustomOperation
@@ -20,6 +22,9 @@ from ltep_athena_api.models.DataSet import DataSet
 from ltep_athena_api.models.InputForm import (InputField, InputFieldGroup,
                                               InputFieldGroupSelectionOption)
 from ltep_athena_api.models.WorkflowOperation import WorkflowOperation
+from threading import Thread
+
+INTERNAL_API_ADDRESS: str = None
 
 
 @dataclass
@@ -181,7 +186,7 @@ class AthenaAPI:
         except Exception as e:
             print(e)
 
-    def stream_fusioncharts_data_unformatted(self, event_name: str, label: Union[str, int, Any], value: Union[int, float, str], auth: AthenaAuth) -> None:
+    def stream_fusioncharts_data_unformatted(self, event_name: str, label: Union[str, int, Any], value: Union[int, float, str], auth: AthenaAuth, message: str = "") -> None:
         """This method creates a Websocket to LTEP Athena Streaming Service and streams the passed data. Currently, the data must be json-serializable.
         :param str event_name: name of the event (if you stream fusionChart data, the Chart id must be identical if you don't use built-in preprocessing method)
         :param Union[str, int, Any] label: the X-value of Chart (label)
@@ -189,22 +194,47 @@ class AthenaAPI:
         :param AthenaAuth auth: AthenaAuth object
         """
         stream_data = {EVENT_DATA_KEY: {
-            "label": label, "value": value, "uuid": uuid4().hex}}
+            "label": label, "value": value, "msgTitle": message, "uuid": uuid4().hex}}
         try:
             self.stream_data(event_name=event_name,
                              data=stream_data, auth=auth)
         except Exception as e:
             print(e)
 
+    def stream_fusioncharts_data_flex(self, event_name: str, to_update_data: dict, auth: AthenaAuth) -> None:
+        """This method creates a Websocket to LTEP Athena Streaming Service and streams the passed data. Currently, the data must be json-serializable.
+        :param str event_name: name of the event (if you stream fusionChart data, the Chart id must be identical if you don't use built-in preprocessing method)
+        :param dict to_update_data: data that should be update in real-time fusionchart
+        :param AthenaAuth auth: AthenaAuth object
+        """
+        stream_data = {EVENT_DATA_KEY: to_update_data}
+        try:
+            self.stream_data(event_name=event_name,
+                             data=stream_data, auth=auth)
+        except Exception as e:
+            print(e)
+
+    def start_custom_streamer_function(self, function_signature: Union[str, FunctionType], function_parameters: dict = None):
+        """This method is a wrapper for starting streaming functions. It creates and manages the Stream in Threads for the User.
+        :param Union[str, FunctionType] function_signature: the signature of the function as string or direct reference
+        :param Optional[dict[str,str]] function_parameters: dict[str,str]"""
+        t = Thread(target=self.function_streaming_registry.get(function_signature) if isinstance(function_signature, str) else function_signature,
+                   kwargs=self.function_streaming_params_registry.get(
+            function_signature) if function_parameters is None else function_parameters, daemon=True)
+        t.start()
+
     @staticmethod
-    def preprocessing_fusionchart_real_time(complete_fusionchart_data: dict, event_name: str, auth: AthenaAuth) -> dict:
+    def preprocessing_fusionchart_real_time(complete_fusionchart_data: dict, event_name: str, auth: AthenaAuth, showMessagesButton: bool = False, add_special_function_to_execute: str = None, special_function_button_name: str = "Trigger custom Function") -> dict:
         """This methods adds EventTriggers to user-defined FusionChart dict/json. 
         User can do it accordingly the FusionChart documentation himself 
         but it is highly recommended to use this built-in function.
         :param dict complete_fusionchart_data: complete fusion chart dict/json to be send to Fronentend
         :param str event_name: name of the event; (Chart id will be replaced with event_name, so event_name should be a unique value)
+        :param bool showMessagesButton: will include an option to display messages in the chart; (In case you pass a msgTitle to the stream function)
+        :param str add_special_function_to_execute: will execute the passed function if triggered; (Function must be registered via the Athena API)
+        :param str special_function_button_name: the passed name will be used for the button acting as a trigger for the additionaly added special function
         """
-
+        global INTERNAL_API_ADDRESS
         if not complete_fusionchart_data.get("result", None) is None:
             data = complete_fusionchart_data.get("result")
         else:
@@ -216,7 +246,9 @@ class AthenaAPI:
         data.update({"events": {
             "initialized":
             EVENT_LISTENER_FUSIONCHART_LABEL_VALUE.format(
-                chart_id=data.get("id", event_name), streaming_host=auth.host_api_address_streaming)
+                chart_id=data.get("id", event_name), streaming_host=auth.host_api_address_streaming),
+            "beforeRender": EVENT_LISTENER_FUSIONCHART_BEFORE_RENDER.format(api_address=INTERNAL_API_ADDRESS, func_name=add_special_function_to_execute, button_name=special_function_button_name) if showMessagesButton or not add_special_function_to_execute is None else "",
+            "renderComplete": EVENT_LISTENER_FUSIONCHART_RENDER_COMPLETE if showMessagesButton or not add_special_function_to_execute is None else "",
         }})
         return data
 

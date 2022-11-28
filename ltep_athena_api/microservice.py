@@ -6,7 +6,7 @@ import flask as fl
 from flask import Flask
 from flask_cors import CORS, cross_origin
 from ltep_athena_api.athena_api import AthenaAPI
-
+from ltep_athena_api.constants import INTERNAL_HOST_ADDRESS
 athena_api: AthenaAPI = None
 
 
@@ -22,15 +22,21 @@ class AthenaRestAPI:
     def endpoints_exception(code, msg):
         fl.abort(fl.make_response(fl.jsonify(message=msg), code))
 
-    def initiate_service(self, host='0.0.0.0', port=27027, origins: List[str] = ["*"]):
+    def initiate_service(self, host='0.0.0.0', port=27027, origins: List[str] = ["*"], start_streamers: list = ["*"]):
         """This method initializes the FLASK application.
             :params str host: server url for hosting service
             :params int port: port where application shall run
             :returns: None
             :rtype: None
         """
-        [self.__start_websocket_tasks(key) for
-            key in self.athena_api.function_streaming_registry.keys()]
+        self.athena_api.set_internal_address(
+            f"{host if not host == '0.0.0.0' else '127.0.0.1'}:{port}")
+        if "*" in start_streamers:
+            [self.__start_websocket_tasks(key) for
+                key in self.athena_api.function_streaming_registry.keys()]
+        else:
+            [self.__start_websocket_tasks(key) for
+                key in self.athena_api.function_streaming_registry.keys() if key in start_streamers]
         app_api = Flask(__name__)
         CORS(app_api, origins=origins)
         app_api.register_blueprint(blueprint=blueprint)
