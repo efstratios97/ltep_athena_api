@@ -1,10 +1,3 @@
-# Project Athena
-'''
-Owner: Efstratios Pahis
-Contributors:
-Description: Defines a DataSet object
-'''
-
 import pandas as pd
 
 from dataclasses import dataclass

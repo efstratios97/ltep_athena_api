@@ -6,7 +6,6 @@ import flask as fl
 from flask import Flask
 from flask_cors import CORS, cross_origin
 from ltep_athena_api.athena_api import AthenaAPI
-from ltep_athena_api.constants import INTERNAL_HOST_ADDRESS
 athena_api: AthenaAPI = None
 
 
@@ -60,8 +59,8 @@ def get_global_athena_api_instance() -> AthenaAPI:
 blueprint = fl.Blueprint('AthenaRestAPI', __name__)
 
 
-@ blueprint.route('/api/v1/athenarestapi/execute/<func_name>', methods=['GET'])
-@ cross_origin(origins="*")
+@blueprint.route('/api/v1/athenarestapi/execute/<func_name>', methods=['GET'])
+@cross_origin(origins="*")
 def execute_individual_function(func_name: str):
     try:
         try:
