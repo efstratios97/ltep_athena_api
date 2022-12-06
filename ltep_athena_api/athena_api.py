@@ -43,6 +43,10 @@ class AthenaAPI:
         except Exception as e:
             print(e)
 
+    def set_internal_address(self, host_address: str):
+        global INTERNAL_API_ADDRESS
+        INTERNAL_API_ADDRESS = host_address
+
     @AthenaAuth.authenticate_access_athena
     def get_data(self, dataset_id: str, dataset_label: str, auth: AthenaAuth) -> pd.DataFrame:
         """This method retrieves dataset data from specified Athena Platform and dataset. 
