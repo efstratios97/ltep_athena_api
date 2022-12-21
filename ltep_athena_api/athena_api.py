@@ -38,8 +38,8 @@ class AthenaAPI:
 
     def __get_user(self, auth: AthenaAuth) -> dict:
         try:
-            return requests.get(auth.host_api_address + '/user/email?email=' +
-                                auth.email).json()
+            return requests.get(auth.host_api_address_sandbox + '/api/v1/user/email?email=' +
+                                auth.email, headers={'Authorization': json.dumps(auth.__dict__)}).json()
         except Exception as e:
             print(e)
 
@@ -47,11 +47,9 @@ class AthenaAPI:
         global INTERNAL_API_ADDRESS
         INTERNAL_API_ADDRESS = host_address
 
-    @AthenaAuth.authenticate_access_athena
-    def get_data(self, dataset_id: str, dataset_label: str, auth: AthenaAuth) -> pd.DataFrame:
+    def get_data(self, dataset_id: str, auth: AthenaAuth) -> pd.DataFrame:
         """This method retrieves dataset data from specified Athena Platform and dataset. 
         :param str dataset_id: id of dataset of interest
-        :param str dataset_label: label of dataset of interest
         :param AthenaAuth auth: AthenaAuth object
         :raises Exception: if dataset retrieval was unsuccessful
         :returns: dataframe of requested data
@@ -59,17 +57,18 @@ class AthenaAPI:
         """
         user = self.__get_user(auth=auth)
         try:
-            response = requests.get(auth.host_api_address + '/api/v1/dataset/data?user_id=' +
-                                    user.get('user_id', '') + '&dataset_id=' + dataset_id + '&dataset_label=' + dataset_label).json()
+            response = requests.get(auth.host_api_address_sandbox + '/api/v1/dataset/data?user_id=' +
+                                    user.get('user_id', '') + '&dataset_id=' + dataset_id, headers={"Authorization": json.dumps(auth.__dict__)}).json()
             return pd.read_json(response)
         except Exception as e:
             print(e)
             raise Exception(
                 "AthenaApi: Exception raised @ get_data(*args). Data could not retrieved. Check existence of dataset/user, user's credentials or user's access rigths to dataset {dataset_id}".format(dataset_id=dataset_id))
 
-    @AthenaAuth.authenticate_access_athena
-    def get_newest_dataset_by_label(self, dataset_label: str, auth: AthenaAuth) -> pd.DataFrame:
-        """This method retrieves a dataset from specified Athena Platform and dataset label. 
+    def get_newest_dataset_by_label(self, dataset_label: str, auth: AthenaAuth) -> DataSet:
+        """This method retrieves a dataset from specified Athena Platform and dataset label.
+        Please mind that this method just returns the DataSet Object without the coresponding data.
+        For retrieving data, please exclusively use `get_data`. 
         :param str dataset_label: label of dataset of interest
         :param AthenaAuth auth: AthenaAuth object
         :raises Exception: if dataset retrieval was unsuccessful
@@ -78,29 +77,33 @@ class AthenaAPI:
         """
         try:
             response = requests.get(
-                auth.host_api_address + "/api/v1/dataset/"+dataset_label+"/newest").json()
-            return response
+                auth.host_api_address_sandbox + "/api/v1/dataset/"+dataset_label+"/newest",
+                headers={'Authorization': json.dumps(auth.__dict__)}).json()
+            return DataSet(**response)
         except Exception as e:
             print(e)
             raise Exception(
                 "AthenaApi: Exception raised @ get_newest_dataset_by_label(*args).")
 
-    @AthenaAuth.authenticate_access_athena
     def save_dataset(self, dataset: DataSet, auth: AthenaAuth) -> bool:
         """This method creates new Dataset and sends it to LTEP Athena Platform.
+        If you don't specify an `owner` in `DataSet` Object, you will automatically be assigned as the owner.
         :param Dataset dataset: dataset
         :returns: success info
         :rtype: bool"""
         try:
             data = dataset.data.to_json()
             del dataset.__dict__['data']
+            del dataset.__dict__['size']
+            del dataset.__dict__['hash_of_dataset']
+            del dataset.__dict__['creation_date']
+            del dataset.__dict__['dataset_id']
             if dataset.owner is None:
-                user_response = requests.get(
-                    auth.host_api_address + "/api/v1/user/email?email=" + auth.email).json()
-                dataset.owner = user_response['user_id']
-            response = requests.post(auth.host_api_address +
-                                     '/api/v1/dataset', json={"data": data, "dataset": json.dumps(dataset.__dict__, default=str)}).json()
-            print(response)
+                user = self.__get_user(auth=auth)
+                dataset.owner = user['user_id']
+            requests.post(auth.host_api_address_sandbox +
+                          '/api/v1/dataset', json={"data": data, "dataset": json.dumps(dataset.__dict__, default=str)},
+                          headers={'Authorization': json.dumps(auth.__dict__)}).json()
             return True
         except Exception as e:
             print(e)
@@ -108,7 +111,6 @@ class AthenaAPI:
                 "AthenaApi: Exception catched @ save_dataset(*args). Dataset could not be created")
             return False
 
-    @AthenaAuth.authenticate_access_athena
     def create_analysis_block(
             self, analysis_block: AnalysisBlock, custom_operation: CustomOperation, inputfields: List[InputField], auth: AthenaAuth,
             inputfield_group: InputFieldGroup = None, inputfield_selection_options: List[InputFieldGroupSelectionOption] = None, input_field_selection_option_dict: dict = None) -> bool:
@@ -139,9 +141,9 @@ class AthenaAPI:
             analysis_block_complete_dict.update(
                 {'input_field_selection_option_dict': input_field_selection_option_dict})
         try:
-            response = requests.post(auth.host_api_address_sandbox +
-                                     '/api/sandbox/analysis', json=analysis_block_complete_dict).json()
-            print(response)
+            requests.post(auth.host_api_address_sandbox +
+                          '/api/sandbox/analysis', json=analysis_block_complete_dict,
+                          headers={'Authorization': json.dumps(auth.__dict__)}).json()
             return True
         except Exception as e:
             print(e)
@@ -149,7 +151,6 @@ class AthenaAPI:
                 "AthenaApi: Exception catched @ create_analysis_block(*args). Analysis Block could not be created. Probably alredy exists.")
             return False
 
-    @AthenaAuth.authenticate_access_athena
     def create_workflow_operation(
             self, workflow_operation: WorkflowOperation, auth: AthenaAuth) -> bool:
         """This method creates a custom workflow operation and sends it to LTEP Athena Platform. 
@@ -159,9 +160,9 @@ class AthenaAPI:
         :rtype: bool
         """
         try:
-            response = requests.post(auth.host_api_address +
-                                     '/api/v1/workflowoperation', json=workflow_operation.__dict__).json()
-            print(response)
+            requests.post(auth.host_api_address_sandbox +
+                          '/api/v1/workflowoperation', json=workflow_operation.__dict__,
+                          headers={'Authorization': json.dumps(auth.__dict__)}).json()
             return True
         except Exception as e:
             print(e)
