@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 from threading import Thread
-from typing import List
+from typing import List, Any
 
 import flask as fl
 from flask import Flask
 from flask_cors import CORS, cross_origin
+
 from ltep_athena_api.athena_api import AthenaAPI
+from ltep_athena_api.models.CleanserResult import CleanserResult
+
 athena_api: AthenaAPI = None
 
 
@@ -79,10 +82,16 @@ def execute_individual_function(func_name: str):
             try:
                 data = athena_api.function_registy.get(func_name, None)(
                     **athena_api.function_params_registry.get(func_name, {}), **formdata)
-                return fl.jsonify({"result": data}), 200
+                return fl.jsonify({"result": __data_preprocessing_for_data_cleanser(data)}), 200
             except Exception as e:
                 print(e)
     except Exception as e:
         print(e)
         print("function_execution_failed: check if Function was registered! Details see above.")
         return AthenaRestAPI.endpoints_exception(msg="function_execution_failed: check if Function was registered!", code="400")
+
+
+def __data_preprocessing_for_data_cleanser(data: Any) -> Any:
+    if isinstance(data, CleanserResult):
+        return data.formatted_results
+    return data
