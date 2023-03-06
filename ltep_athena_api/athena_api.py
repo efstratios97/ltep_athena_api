@@ -21,6 +21,7 @@ from ltep_athena_api.models.CustomOperation import CustomOperation
 from ltep_athena_api.models.DataSet import DataSet
 from ltep_athena_api.models.InputForm import (InputField, InputFieldGroup,
                                               InputFieldGroupSelectionOption)
+from ltep_athena_api.models.Cleanser import Cleanser
 from ltep_athena_api.models.WorkflowOperation import WorkflowOperation
 from threading import Thread
 
@@ -148,7 +149,7 @@ class AthenaAPI:
         except Exception as e:
             print(e)
             print(
-                "AthenaApi: Exception catched @ create_analysis_block(*args). Analysis Block could not be created. Probably alredy exists.")
+                "AthenaApi: Exception catched @ create_analysis_block(*args). Analysis Block could not be created. Probably already exists.")
             return False
 
     def create_workflow_operation(
@@ -167,7 +168,26 @@ class AthenaAPI:
         except Exception as e:
             print(e)
             print(
-                "AthenaApi: Exception catched @ create_workflow_operation(*args). Custom Workflow Operation could not be created. Probably alredy exists.")
+                "AthenaApi: Exception catched @ create_workflow_operation(*args). Custom Workflow Operation could not be created. Probably already exists.")
+            return False
+
+    def create_cleanser(
+            self, cleanser: Cleanser, auth: AthenaAuth) -> bool:
+        """This method creates a cleanser and sends it to LTEP Athena Platform. 
+        :param Cleanser cleanser: Cleanser
+        :param AthenaAuth auth: AthenaAuth object
+        :returns: success info
+        :rtype: bool
+        """
+        try:
+            requests.post(auth.host_api_address_sandbox +
+                          '/api/v1/cleanser', json=cleanser.__dict__,
+                          headers={'Authorization': json.dumps(auth.__dict__)}).json()
+            return True
+        except Exception as e:
+            print(e)
+            print(
+                "AthenaApi: Exception catched @ create_cleanser(*args). Cleanser could not be created. Probably already exists.")
             return False
 
     def stream_data(self, event_name: str, data: dict, auth: AthenaAuth) -> None:

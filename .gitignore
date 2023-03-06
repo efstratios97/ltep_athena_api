@@ -8,3 +8,4 @@ dist
 .env.*prod
 *ltep_athena_api_env
 *.pytest_cache
+*_venv
