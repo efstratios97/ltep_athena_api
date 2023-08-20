@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="LTEP Athena API",                     # This is the name of the package
-    version="0.0.8",                        # The initial release version
+    version="1.0.0",                        # The initial release version
     # Full name of the author
     author="Efstratios Pahis from LTEP Technologies",
-    description="The official LTEP Athena API: Welcome to the World's most flexible and extensible Data Science Platform",
+    description="The official LTEP Athena API: Welcome to the World's most flexible and extensible Data Science and Automation Platform",
     # Long description read from the the readme file
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -21,7 +21,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],                                      # Information to filter the project on PyPi website
     license='MIT',
-    python_requires='>=3.6',                # Minimum version requirement of the package
+    python_requires='>=3.7',                # Minimum version requirement of the package
     py_modules=["ltep_athena_api"],             # Name of the python package
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
