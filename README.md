@@ -79,7 +79,7 @@ Create Custom Data Manipulation Algorithms, Custom Analysis, Real-time Streams, 
 
 ## Getting Started
 
-How to install beta-Version: pip install LTEP-Athena-API
+How to install beta-Version: pip install ltep-athena-api
 
 ### Prerequisites
 
@@ -87,7 +87,7 @@ Python >=3.7
 
 ### Installation
 
-pip install LTEP-Athena-API
+pip install ltep-athena-api
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
