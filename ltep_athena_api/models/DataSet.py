@@ -8,7 +8,7 @@ from typing import Any, Optional
 class DataSet:
     name: str
     description: str
-    label: Optional[str] = None
+    label: Optional[str] = "NO_LABEL"
     access_user_list: Optional[list] = ""
     access_business_unit_list:  Optional[list] = ""
     cleaned: Optional[Any] = 0

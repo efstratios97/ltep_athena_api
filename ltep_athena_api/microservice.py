@@ -24,7 +24,7 @@ class AthenaRestAPI:
     def endpoints_exception(code, msg):
         fl.abort(fl.make_response(fl.jsonify(message=msg), code))
 
-    def initiate_service(self, host='0.0.0.0', port=27027, origins: List[str] = ["*"], start_streamers: list = ["*"]):
+    def initiate_service(self, host='http://0.0.0.0', port=27027, origins: List[str] = ["*"], start_streamers: list = ["*"]):
         """This method initializes the FLASK application.
             :params str host: server url for hosting service
             :params int port: port where application shall run
@@ -32,7 +32,7 @@ class AthenaRestAPI:
             :rtype: None
         """
         self.athena_api.set_internal_address(
-            f"{host if not host == '0.0.0.0' else '127.0.0.1'}:{port}")
+            f"{host}:{port}")
         if "*" in start_streamers:
             [self.__start_websocket_tasks(key) for
                 key in self.athena_api.function_streaming_registry.keys()]
@@ -40,9 +40,11 @@ class AthenaRestAPI:
             [self.__start_websocket_tasks(key) for
                 key in self.athena_api.function_streaming_registry.keys() if key in start_streamers]
         app_api = Flask(__name__)
-        CORS(app_api, origins=origins)
+        CORS(app_api, supports_credentials=True, send_wildcard=False, allow_headers=["Content-Type", "x-user-email", "Origin", "Authorization"],
+             expose_headers=["Content-Type", "x-user-email",
+                             "Origin", "Authorization"], origins=origins)
         app_api.register_blueprint(blueprint=blueprint)
-        app_api.run(host=host, port=port)
+        app_api.run(port=port)
 
     def __start_websocket_tasks(self, websocket_task: str):
         """This method sends a data stream to LTEP Athena Platform.
