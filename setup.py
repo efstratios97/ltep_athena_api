@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="LTEP Athena API",                     # This is the name of the package
+    name="ltep_athena_api",                     # This is the name of the package
     # The initial release version
     version='{{VERSION_PLACEHOLDER}}',
     # Full name of the author
@@ -23,9 +23,6 @@ setuptools.setup(
     ],                                      # Information to filter the project on PyPi website
     license='MIT',
     python_requires='>=3.7',                # Minimum version requirement of the package
-    py_modules=["ltep_athena_api"],             # Name of the python package
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
     # Directory of the source code of the package
     url="https://github.com/efstratios97/ltep_athena_api",
     install_requires=[

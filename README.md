@@ -4,10 +4,10 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url] -->
+
 [![MIT License][license-shield]][license-url]
+
 <!-- [![LinkedIn][linkedin-shield]][linkedin-url] -->
-
-
 
 <!-- PROJECT LOGO -->
 <br />
@@ -31,8 +31,6 @@
     <a href="https://github.com/efstratios97/ltep_athena_api/issues">Request Feature</a>
   </p>
 </div>
-
-
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -60,49 +58,41 @@
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
+
 ## About The Project
 
 [![Product Name Screen Shot][product-screenshot]](https://www.ltep-technologies.com/wp-content/uploads/2022/06/ATHINA_LOGO-3.png)
 
 This is the official LTEP Athena API to connect to your LTEP Athena platform and publish individual code & algorithms.
-Create Custom Data Manipulation Algorithms, Custom Analysis, Real-time Streams, and utilize any Technology from Apache Flink to your own Package/Library. 
+Create Custom Data Manipulation Algorithms, Custom Analysis, Real-time Streams, and utilize any Technology from Apache Flink to your own Package/Library.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 ### Built With
 
 [![Python][Python]][Python-url]
 
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- GETTING STARTED -->
+
 ## Getting Started
 
-How to install beta-Version: pip install -i https://test.pypi.org/simple/ LTEP-Athena-API
-
+How to install beta-Version: pip install LTEP-Athena-API
 
 ### Prerequisites
 
-Python >=3.6
-
+Python >=3.7
 
 ### Installation
 
-pip install -i https://test.pypi.org/simple/ LTEP-Athena-API
+pip install LTEP-Athena-API
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- USAGE EXAMPLES -->
+
 ## Usage
 
 The Beta Documentation is available on https://ltep-athena-api.readthedocs.io/en/latest/
@@ -111,9 +101,8 @@ _For more examples, please refer to the [Documentation](https://ltep-athena-api.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 ROADMAP
+
 ## Roadmap
 
 - [x] Add Changelog
@@ -122,9 +111,8 @@ See the [open issues](https://github.com/othneildrew/Best-README-Template/issues
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTRIBUTING -->
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -140,41 +128,36 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- LICENSE -->
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTACT -->
+
 ## Contact
 
-Efstratios Pahis - [@ltep](https://ltep-technologies.com) - 
+Efstratios Pahis - [@ltep](https://ltep-technologies.com) -
 
 Project Link: [https://github.com/efstratios97/ltep_athena_api](https://github.com/efstratios97/ltep_athena_api)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- ACKNOWLEDGMENTS -->
+
 ## Acknowledgments
 
 LTEP Technologies UG (haftungsbeschränkt)
 www.ltep-technologies.com
 
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
 [contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
 [contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
@@ -203,4 +186,4 @@ www.ltep-technologies.com
 [Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
 [Bootstrap-url]: https://getbootstrap.com
 [JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com 
+[JQuery-url]: https://jquery.com
