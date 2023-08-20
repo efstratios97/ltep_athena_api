@@ -5,7 +5,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="LTEP Athena API",                     # This is the name of the package
-    version="1.0.0",                        # The initial release version
+    # The initial release version
+    version='{{VERSION_PLACEHOLDER}}',
     # Full name of the author
     author="Efstratios Pahis from LTEP Technologies",
     description="The official LTEP Athena API: Welcome to the World's most flexible and extensible Data Science and Automation Platform",
